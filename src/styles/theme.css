@@ -1,0 +1,256 @@
+/* === Dark-only theme. Light mode is disabled (see components/ThemeSelect.astro). === */
+:root {
+  color-scheme: dark;
+
+  /* Brand tokens */
+  --ps-bg:         #0a0202;
+  --ps-bg-mid:     #110404;
+  --ps-bg-card:    #160606;
+  --ps-bg-code:    #0e0303;
+  --ps-border:     #2a0808;
+  --ps-border-hi:  #4a1010;
+  --ps-red-deep:   #7b1a12;
+  --ps-red:        #a52a20;
+  --ps-red-hi:     #C0392B;
+  --ps-amber:      #e8b059;
+  --ps-text:       #f5d6d6;
+  --ps-text-mute:  #8a4848;
+  --ps-text-faint: #5a2828;
+
+  /* Typography */
+  --sl-font: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sl-font-system-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Starlight palette - applied regardless of data-theme */
+  --sl-color-bg: var(--ps-bg);
+  --sl-color-bg-nav: var(--ps-bg-mid);
+  --sl-color-bg-sidebar: var(--ps-bg-mid);
+  --sl-color-bg-inline-code: var(--ps-bg-code);
+  --sl-color-bg-accent: var(--ps-red-deep);
+
+  --sl-color-text: var(--ps-text);
+  --sl-color-text-accent: var(--ps-red-hi);
+  --sl-color-text-invert: #fff;
+  --sl-color-white: #fff;
+  --sl-color-black: #000;
+
+  --sl-color-accent-low: #2a0808;
+  --sl-color-accent: var(--ps-red);
+  --sl-color-accent-high: #f5c6c6;
+
+  --sl-color-hairline: var(--ps-border);
+  --sl-color-hairline-light: var(--ps-border);
+  --sl-color-hairline-shade: var(--ps-border-hi);
+
+  --sl-color-gray-1: #f5d6d6;
+  --sl-color-gray-2: #c89898;
+  --sl-color-gray-3: #8a4848;
+  --sl-color-gray-4: #5a2828;
+  --sl-color-gray-5: #2a0808;
+  --sl-color-gray-6: #160606;
+  --sl-color-gray-7: #110404;
+}
+
+/* Lock data-theme=dark visually even if Starlight's persisted localStorage flips it. */
+:root[data-theme="light"] {
+  color-scheme: dark;
+}
+
+/* === Scrollbar === */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ps-border-hi) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--ps-bg-mid);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--ps-border-hi);
+  border: 2px solid var(--ps-bg-mid);
+  border-radius: 0;
+  transition: background 0.15s;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--ps-red);
+}
+*::-webkit-scrollbar-thumb:active {
+  background: var(--ps-red-hi);
+}
+*::-webkit-scrollbar-corner {
+  background: var(--ps-bg-mid);
+}
+
+/* === Logo sizing in sidebar header === */
+.site-title img {
+  height: 38px;
+  width: auto;
+  filter: drop-shadow(0 0 8px rgba(192, 57, 43, 0.3));
+  transition: filter 0.25s;
+}
+.site-title:hover img {
+  filter: drop-shadow(0 0 14px rgba(192, 57, 43, 0.55));
+}
+
+/* === Headings: Space Grotesk weight ramp === */
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3,
+.sl-markdown-content h4 {
+  font-family: var(--sl-font);
+  letter-spacing: -0.015em;
+}
+.sl-markdown-content h1 { font-weight: 700; letter-spacing: -0.025em; }
+.sl-markdown-content h2 { font-weight: 600; }
+.sl-markdown-content h3 { font-weight: 600; }
+
+/* === Sidebar hover + active === */
+.sidebar-content a {
+  position: relative;
+  border-left: 2px solid transparent;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.sidebar-content a:hover {
+  color: var(--ps-text);
+  background: rgba(123, 26, 18, 0.12);
+  border-left-color: var(--ps-red);
+}
+.sidebar-content a[aria-current="page"] {
+  color: #fff;
+  background: rgba(123, 26, 18, 0.22);
+  border-left-color: var(--ps-red-hi);
+  font-weight: 600;
+}
+
+/* sidebar group labels */
+.sidebar-content summary,
+.sidebar-content .group-label {
+  font-family: var(--sl-font-system-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ps-text-mute);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.sidebar-content summary:hover { color: var(--ps-text); }
+.sidebar-content details > summary .caret {
+  color: var(--ps-red);
+  transition: transform 0.18s ease, color 0.15s;
+}
+.sidebar-content details[open] > summary .caret {
+  color: var(--ps-red-hi);
+}
+
+/* === Top nav hover === */
+.header a {
+  transition: color 0.15s;
+}
+.header a:hover {
+  color: var(--ps-red-hi);
+}
+
+/* === Code blocks: bordered, tinted titlebar === */
+.expressive-code {
+  border: 1px solid var(--ps-border);
+  border-radius: 0;
+  position: relative;
+}
+.expressive-code .frame {
+  border-radius: 0 !important;
+}
+.expressive-code .header {
+  background: linear-gradient(
+    to right,
+    rgba(123, 26, 18, 0.18),
+    rgba(123, 26, 18, 0.05)
+  ) !important;
+  border-bottom: 1px solid var(--ps-border) !important;
+}
+.expressive-code .header .title {
+  font-family: var(--sl-font-system-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: var(--ps-text-mute);
+}
+.expressive-code pre {
+  background: var(--ps-bg-code) !important;
+}
+
+/* inline code - subtle red border */
+:not(pre) > code {
+  border: 1px solid var(--ps-border);
+  padding: 0.1em 0.4em;
+  font-size: 0.9em;
+  color: var(--ps-amber);
+}
+
+/* === Links in prose === */
+.sl-markdown-content a:not(:where(.not-content *)) {
+  color: var(--ps-red-hi);
+  text-decoration-color: var(--ps-border-hi);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s;
+}
+.sl-markdown-content a:hover {
+  text-decoration-color: var(--ps-red-hi);
+}
+
+/* === Tables - hairline red === */
+/* Starlight sets display:block + overflow:auto on tables (for h-scroll on mobile),
+   which makes thead/tbody collapse to content width. Force real table layout. */
+.sl-markdown-content table {
+  display: table !important;
+  width: 100%;
+  border: 1px solid var(--ps-border);
+  border-collapse: collapse;
+  table-layout: auto;
+  overflow-x: auto;
+}
+.sl-markdown-content th {
+  background: var(--ps-bg-card);
+  font-family: var(--sl-font-system-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ps-text);
+  text-align: left;
+}
+.sl-markdown-content td,
+.sl-markdown-content th {
+  border: 1px solid var(--ps-border) !important;
+  padding: 0.55rem 0.85rem;
+  vertical-align: top;
+}
+/* Starlight zeroes padding-inline-start on first cell - undo it */
+.sl-markdown-content table th:first-child,
+.sl-markdown-content table td:first-child {
+  padding-inline-start: 0.85rem;
+}
+.sl-markdown-content table th:last-child,
+.sl-markdown-content table td:last-child {
+  padding-inline-end: 0.85rem;
+}
+
+/* === Blockquotes / callouts === */
+.sl-markdown-content blockquote {
+  border-left: 2px solid var(--ps-red);
+  background: rgba(123, 26, 18, 0.06);
+  padding-left: 1rem;
+  font-style: normal;
+}
+
+/* === Footer / edit link / last-updated === */
+.meta a,
+footer.sl-flex {
+  font-family: var(--sl-font-system-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--ps-text-mute);
+}
+.meta a:hover {
+  color: var(--ps-red-hi);
+}

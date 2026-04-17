@@ -1,0 +1,362 @@
+---
+import "../styles/landing.css";
+
+const stats = [
+  { num: 1, suffix: "", label: "Maintainer" },
+  { num: 0, suffix: "", label: "SaaS bills" },
+  { num: 0, suffix: "", label: "Vendor add-ons to unlock features" },
+  { num: 5194, suffix: "", label: "Lines of Go. Read it. Audit it. Fork it." },
+];
+
+const questions = [
+  {
+    q: "Who has access to this app?",
+    a: "Reachability search. Resolves the segment to every SCIM identity that lands on it, with the policy that lets them in.",
+  },
+  {
+    q: "What can this user reach?",
+    a: "Reverse reachability. Walk a SCIM user through every segment they qualify for. No filter trees.",
+  },
+  {
+    q: "What breaks if I delete this connector?",
+    a: "Blast radius. Server groups left stranded, segments newly unreachable, policies pointing at nothing.",
+  },
+  {
+    q: "What does this policy actually do?",
+    a: "Walk the FSM. Every rule, every operand, every SCIM lookup the engine touched.",
+  },
+];
+
+const pillars = [
+  {
+    num: "01",
+    title: "Simulate",
+    desc: "Dry-run any policy change against the live snapshot. See the decision and the reasoning chain before you touch prod.",
+  },
+  {
+    num: "02",
+    title: "Search",
+    desc: "Search any string - IP, app, user, group. No filter trees, no guessing which dropdown.",
+  },
+  {
+    num: "03",
+    title: "Audit",
+    desc: "Pre-built queries for the questions audit asks you. Orphans, shadows, blast radius, overlap.",
+  },
+  {
+    num: "04",
+    title: "Visualize",
+    desc: "Stop reading column tables. See the path from user to app, drawn end-to-end.",
+  },
+];
+
+const flow = [
+  {
+    num: "01",
+    title: "Fetch",
+    desc: "Seventeen ZPA endpoints, fetched concurrently. Snapshot held in one struct, persisted to SQLite.",
+    meta: "internal/fetcher",
+  },
+  {
+    num: "02",
+    title: "Index",
+    desc: "Build the index ZPA never gave you. Inverted lookup over every field.",
+    meta: "internal/index",
+  },
+  {
+    num: "03",
+    title: "Serve",
+    desc: "Gin on :8080. Codegen routes. Caddy + Authelia for auth. Distroless container.",
+    meta: "internal/server",
+  },
+];
+
+const docs = [
+  {
+    tag: "Start",
+    title: "Getting started",
+    desc: "Native and Docker first-run. ZPA credentials. Five-minute setup.",
+    href: "/getting-started/",
+  },
+  {
+    tag: "Feature",
+    title: "Policy simulator",
+    desc: "Walk a change through the policy engine. See the decision and the path that produced it.",
+    href: "/features/simulator/",
+  },
+  {
+    tag: "Feature",
+    title: "Analytics reports",
+    desc: "Six pre-built queries. Blast radius, shadows, orphans, overlap, connector load, SCIM reach.",
+    href: "/analytics/",
+  },
+  {
+    tag: "Deploy",
+    title: "Docker compose",
+    desc: "Four-container stack. Caddy, Authelia, API, frontend. Make targets.",
+    href: "/deployment/docker-compose/",
+  },
+  {
+    tag: "Reference",
+    title: "API",
+    desc: "37 typed endpoints. Generated OpenAPI spec. Generated TypeScript client.",
+    href: "/reference/api/",
+  },
+  {
+    tag: "ZPA",
+    title: "Data model quirks",
+    desc: "The traps. RHS field, RuleOrder string, Disabled encoding, SCIM ID drift.",
+    href: "/data-model/",
+  },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>PainScaler - Self-hosted ZPA insight tool</title>
+    <meta
+      name="description"
+      content="Self-hosted ZPA insight tool. Search, simulate, and audit Zscaler Private Access without opening twelve console tabs."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body class="landing">
+    <svg class="bg-contour is-on" id="bg-contour" aria-hidden="true"></svg>
+    <div class="bg-noise"></div>
+    <div class="bg-vignette"></div>
+
+    <nav class="land-nav">
+      <a href="/" class="land-logo" aria-label="PainScaler">
+        <img src="/painscaler.svg" alt="PainScaler" />
+      </a>
+      <div class="land-nav-links">
+        <a href="/getting-started/">Docs</a>
+        <a href="/features/simulator/">Features</a>
+        <a href="/analytics/">Analytics</a>
+        <a href="/reference/api/">API</a>
+        <a href="https://github.com/PainScaler/painscaler" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-eyebrow reveal">For ZPA admins inheriting a mess.</div>
+      <h1 class="hero-title reveal">
+        ZPA, but you can <span class="accent">actually</span> read it.
+      </h1>
+      <p class="hero-tagline reveal">
+        Search what you have. Simulate before you change. Audit without delay.<span class="cursor">_</span>
+      </p>
+      <div class="hero-actions reveal">
+        <a href="/getting-started/" class="btn btn-primary">Get started</a>
+        <a href="https://github.com/PainScaler/painscaler" class="btn" target="_blank" rel="noopener">View source</a>
+      </div>
+      <div class="hero-meta">
+        <span class="disclaimer">Not affiliated with Zscaler</span>
+        <span class="scroll-hint">scroll</span>
+      </div>
+    </section>
+
+    <section class="section stats">
+      <div class="stats-grid reveal-stagger">
+        {stats.map((s) => (
+          <div class="stat">
+            <div class="stat-num" data-target={s.num} data-suffix={s.suffix}>0{s.suffix}</div>
+            <div class="stat-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="section questions">
+      <div class="reveal">
+        <div class="section-label">Questions it answers</div>
+        <h2 class="section-title">The portal won't tell you.</h2>
+        <p class="section-sub">
+          Companion to ZPA, not a replacement. The features you assumed were already there.
+        </p>
+      </div>
+      <div class="reveal-stagger" style="margin-top: 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px;">
+        {questions.map((item) => (
+          <div class="question">
+            <div class="question-q">{item.q}</div>
+            <div class="question-a"><span class="out">&gt;</span> {item.a}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="section pillars">
+      <div class="reveal">
+        <div class="section-label">What it does</div>
+        <h2 class="section-title">Four primitives. One binary.</h2>
+      </div>
+      <div class="reveal-stagger" style="margin-top: 56px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+        {pillars.map((p) => (
+          <div class="pillar">
+            <div class="pillar-num">{p.num}</div>
+            <div class="pillar-title">{p.title}</div>
+            <div class="pillar-desc">{p.desc}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="section flow">
+      <div class="reveal" style="grid-column: 1 / -1;">
+        <div class="section-label">How it works</div>
+        <h2 class="section-title">Fetch. Index. Serve.</h2>
+        <p class="section-sub">
+          Three layers. Each one boring on purpose. The interesting work is in the
+          index, not the plumbing.
+        </p>
+      </div>
+      <div class="reveal-stagger" style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 56px;">
+        {flow.map((f) => (
+          <div class="flow-step">
+            <div class="flow-step-num">{f.num}</div>
+            <div class="flow-step-title">{f.title}</div>
+            <div class="flow-step-desc">{f.desc}</div>
+            <div class="flow-step-meta">{f.meta}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="reveal">
+        <div class="section-label">Read the docs</div>
+        <h2 class="section-title">Pick a thread.</h2>
+      </div>
+      <div class="docs-grid reveal-stagger" style="margin-top: 56px;">
+        {docs.map((d) => (
+          <a href={d.href} class="doc-link">
+            <div class="doc-link-tag">{d.tag}</div>
+            <div class="doc-link-title">{d.title}</div>
+            <div class="doc-link-desc">{d.desc}</div>
+            <div class="doc-link-arrow">Read<span>-&gt;</span></div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <footer class="land-footer">
+      <div class="land-footer-inner">
+        <div>
+          <div class="footer-mark">PAINSCALER</div>
+          <div class="footer-tagline">ZPA, but understandable.</div>
+        </div>
+        <ul class="footer-links">
+          <li><a href="/getting-started/">Docs</a></li>
+          <li><a href="/reference/api/">API</a></li>
+          <li><a href="/deployment/docker-compose/">Deploy</a></li>
+          <li><a href="https://github.com/PainScaler/painscaler" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+        <div class="footer-fine">
+          <span>MIT licensed</span>
+          <span>Not affiliated with Zscaler</span>
+          <span>Made for tired admins</span>
+        </div>
+      </div>
+    </footer>
+
+    <script is:inline>
+      // === Contour background (SVG, CSS-animated stroke-dashoffset) ===
+      (function () {
+        const svg = document.getElementById("bg-contour");
+        if (!svg) return;
+        function build() {
+          const w = innerWidth, h = innerHeight;
+          svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+          svg.setAttribute("preserveAspectRatio", "none");
+          svg.innerHTML = "";
+          const layers = 14;
+          const step = h / layers;
+          for (let i = 0; i < layers; i++) {
+            const y0 = step * i + step * 0.5;
+            const amp = 18 + (i % 3) * 14;
+            const freq = 0.004 + (i % 4) * 0.0015;
+            const phase = i * 0.7;
+            const pts = [];
+            const segs = Math.ceil(w / 18);
+            for (let j = 0; j <= segs; j++) {
+              const x = (j / segs) * w;
+              const y = y0
+                + Math.sin(x * freq + phase) * amp
+                + Math.sin(x * freq * 2.3 + phase * 1.5) * amp * 0.4;
+              pts.push(`${j === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`);
+            }
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", pts.join(" "));
+            const len = w * 1.05;
+            path.style.strokeDasharray = String(len);
+            path.style.strokeDashoffset = String(len);
+            svg.appendChild(path);
+          }
+        }
+        build();
+        let t;
+        addEventListener("resize", () => {
+          clearTimeout(t);
+          t = setTimeout(build, 160);
+        });
+      })();
+
+      // === Reveal on scroll ===
+      (function () {
+        const els = document.querySelectorAll(".reveal, .reveal-stagger");
+        if (!("IntersectionObserver" in window)) {
+          els.forEach((e) => e.classList.add("is-visible"));
+          return;
+        }
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add("is-visible");
+              io.unobserve(e.target);
+            }
+          }
+        }, { threshold: 0.12, rootMargin: "0px 0px -60px 0px" });
+        els.forEach((e) => io.observe(e));
+      })();
+
+      // === Counter animation ===
+      (function () {
+        const counters = document.querySelectorAll(".stat-num");
+        if (!counters.length) return;
+        const animate = (el) => {
+          const target = Number(el.dataset.target || 0);
+          const suffix = el.dataset.suffix || "";
+          const duration = 1400;
+          const start = performance.now();
+          function step(now) {
+            const t = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - t, 3);
+            const v = Math.round(target * eased);
+            el.textContent = v + suffix;
+            if (t < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        };
+        if (!("IntersectionObserver" in window)) {
+          counters.forEach(animate);
+          return;
+        }
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) { animate(e.target); io.unobserve(e.target); }
+          }
+        }, { threshold: 0.5 });
+        counters.forEach((c) => io.observe(c));
+      })();
+    </script>
+  </body>
+</html>

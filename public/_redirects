@@ -1,0 +1,3 @@
+/github   https://github.com/PainScaler/painscaler          302
+/api      /reference/api/                                  301
+/docs/*   /:splat                                          301
