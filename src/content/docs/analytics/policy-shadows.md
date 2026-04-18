@@ -18,22 +18,25 @@ GET /api/v1/analytics/policy-shadows
 ```go
 type PolicyShadowReport struct {
     PolicyA          PolicySummary
-    PolicyB          PolicySummary  // higher RuleOrder, the shadowed one
+    PolicyB          PolicySummary
     SharedScimGroups []NamedRef
     SharedSegments   []NamedRef
     Verdict          string         // "shadow" or "conflict"
 }
 
 type PolicySummary struct {
-    ID        string
-    Name      string
-    Action    string  // ALLOW | DENY | DEFAULT_DENY
-    RuleOrder int
+    ID       string
+    Name     string
+    Action   string  // ALLOW | DENY | DEFAULT_DENY
+    Priority int
 }
 ```
 
-`PolicyA.RuleOrder < PolicyB.RuleOrder`. PolicyA fires first; PolicyB is
-reached only when PolicyA's conditions do not match.
+The pair `(PolicyA, PolicyB)` is unordered — IDs are sorted lexically to
+keep the output stable. The report list itself is sorted by
+`PolicyA.Priority` descending so the highest-priority rules surface first.
+Evaluation order between the two is determined by their `Priority` values
+(higher = earlier).
 
 ## Verdict semantics
 

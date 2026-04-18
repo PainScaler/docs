@@ -23,36 +23,39 @@ operationally.
 Entra ID, Okta API for Okta). One adapter per IdP, configured via env vars,
 exposing `LookupUserGroups(userID) []scimGroupID`.
 
-## Proactive cache refresh
+## Proactive fetcher cache refresh
 
 **Current behavior.** The fetcher caches each ZPA resource with a TTL
 (5 minutes for volatile resources, 1 hour for stable ones). When the TTL
 expires, the next request triggers a refetch and the index is rebuilt
 from the new data. On fetch failure, the cache returns the last-good data
-along with the error. `Cache.Get`
-(`internal/fetcher/cache.go:62`) rechecks freshness after acquiring the
-write lock so concurrent callers after expiry collapse to a single
-fetch. SCIM attribute values are loaded lazily per `(idpID, headerID)`
-pair on first access rather than eagerly enumerated at index build.
+along with the error. `Cache.Get` rechecks freshness after acquiring the
+write lock so concurrent callers after expiry collapse to a single fetch.
+SCIM attribute values are loaded lazily per `(idpID, headerID)` pair on
+first access rather than eagerly enumerated at index build.
 
-**Gap 1 — reactive only.** Refresh fires only when a request arrives
-after expiry. The first request after each expiry pays the full SDK
-round-trip latency (seconds, sometimes tens of seconds on a busy tenant).
-A daemon would warm the cache in the background so user requests never
-pay that latency.
+**Already closed at v1.0.0.**
 
-**Gap 2 — no eager warmup at startup.** The first request after process
-start hits an empty cache. Container restarts impose the same cold-start
-cost on whichever request lands first.
+- *Index warmup and background rebuild.* `Server.StartIndexWarmer` builds
+  the index once at startup before the listener accepts traffic, then
+  rebuilds every `warmerInterval` (4 minutes, less than `indexTTL` of 5
+  minutes). Concurrent handler rebuilds coalesce via `singleflight`.
+  Handlers never wait on a cold index in steady state.
+- *Manual refresh.* `POST /api/v1/refresh` invalidates every fetcher
+  cache, drops the built index, and forces one synchronous rebuild.
+  Requires `Remote-User`; globally throttled to one allowed call per
+  30 seconds.
 
-**Gap 3 — no manual refresh trigger.** When a change in ZPA needs
-immediate visibility, the only options are "wait up to TTL" or restart
-the process.
+**Residual gap — fetcher layer is still reactive.** The
+`Cache[T]` refetch path fires only when a request arrives after TTL
+expiry. The index warmer hides this for `indexTTL` worth of drift, but
+the first rebuild that crosses a fetcher TTL still pays the SDK
+round-trip (seconds, sometimes tens of seconds on a busy tenant).
 
-**Approach.** A background goroutine refreshes each cached resource
-slightly before its TTL expires. An optional `POST /api/v1/refresh`
-invalidates the cache on demand. Eager warmup at startup populates
-every cache before the listener accepts connections.
+**Approach.** A background goroutine inside `internal/fetcher` that
+refreshes each `Cache[T]` slightly before its TTL expires, decoupled
+from the index warmer so upstream latency never leaks into a handler
+call.
 
 ## Browser-to-backend request correlation
 

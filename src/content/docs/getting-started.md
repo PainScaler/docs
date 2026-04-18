@@ -51,6 +51,19 @@ yarn dev   # http://localhost:5173, proxies /api to :8080
 
 Open `http://localhost:5173`.
 
+## Demo run (no ZPA tenant)
+
+For local exploration without ZPA credentials, produce a synthetic
+snapshot and hand it to the backend:
+
+```bash
+go run ./cmd/seedgen -out snapshot.json
+PAINSCALER_DEMO_SEED=$PWD/snapshot.json go run ./cmd/painscaler
+```
+
+The backend skips all ZPA calls and `GET /api/v1/about` reports
+`demo: true`. See [Demo mode](/deployment/demo-mode/).
+
 ## Docker run
 
 ```bash

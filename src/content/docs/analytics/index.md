@@ -36,10 +36,18 @@ When a referenced name cannot be resolved (deleted or stale reference),
 
 ## Refresh model
 
-Reports run against the current index. The index is rebuilt on every
-request from the per-resource caches in `internal/fetcher`. Each resource
-has its own TTL (5 minutes for volatile resources, 1 hour for stable
-ones). Cache misses trigger an SDK refetch on the request that hits the
-miss; concurrent callers after expiry collapse to one fetch via
-double-checked locking. See [Architecture](/reference/architecture/) for
-layer detail and [Roadmap](/reference/roadmap/) for proactive refresh.
+Reports run against the memoized `*index.Index` on `*Server`. A
+background warmer (`StartIndexWarmer`) rebuilds the index every 4 minutes
+on a 5-minute TTL, so handlers almost always hit a warm index.
+`singleflight` coalesces concurrent rebuilds.
+
+Each `BuildIndex` reads through the per-resource caches in
+`internal/fetcher`. Each resource has its own TTL (5 minutes for volatile
+resources, 1 hour for stable ones). Fetcher cache misses trigger an SDK
+refetch on the request that hits the miss; concurrent callers after
+expiry collapse to one fetch via double-checked locking.
+
+`POST /api/v1/refresh` forces both layers to reload on demand (30-second
+global throttle). See [Architecture](/reference/architecture/) for layer
+detail and [Roadmap](/reference/roadmap/) for remaining proactive-refresh
+work at the fetcher layer.

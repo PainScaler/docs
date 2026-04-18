@@ -9,7 +9,10 @@ The backend writes structured JSON logs and exposes Prometheus metrics. The
 frontend posts page-view and error events to a telemetry endpoint that fans
 out to the same log and metric streams.
 
-Only metadata is recorded. No request payloads are logged.
+Only metadata is recorded. No request payloads are logged. Incoming
+request bodies are capped at 1 MiB (`maxRequestBodyBytes` in
+`internal/server/server.go`); requests over the cap fail at the
+middleware layer before the handler runs.
 
 ## Logs
 
@@ -45,7 +48,7 @@ Every HTTP request produces one record after completion:
   "level": "INFO",
   "msg": "http request",
   "service": "painscaler",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "commit": "4a57559",
   "request_id": "5f9e...",
   "route": "/api/v1/segment/:segmentID/policies",

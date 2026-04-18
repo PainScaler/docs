@@ -42,9 +42,10 @@ values vary per header, not per IdP. The index build does not enumerate
 them; the `GetScimAttributeValues` handler triggers a fetch on first
 access for that pair.
 
-Refresh is reactive (request-driven), not proactive. The first request
-after each TTL expiry pays the SDK round-trip. See
-[Roadmap](/reference/roadmap/).
+Fetcher refresh is reactive (request-driven). The first request after
+each TTL expiry pays the SDK round-trip. The index layer hides most of
+this latency from handlers (see below). Fully proactive fetcher refresh
+is on the [Roadmap](/reference/roadmap/).
 
 ### Index layer
 
@@ -76,6 +77,18 @@ or near-constant lookups instead of full traversals.
 Each handler is a method on `*Server`. Handlers read from the index, call
 into `internal/analysis` or `internal/simulator`, and return JSON. No
 business logic in HTTP handlers.
+
+The built `*index.Index` is memoized on `*Server` with `indexTTL` of 5
+minutes. Concurrent rebuilds coalesce via `singleflight` so a dashboard
+firing N parallel widget queries triggers one `BuildIndex`, not N.
+
+`Server.StartIndexWarmer` builds the index once at startup before the
+HTTP listener accepts traffic, then rebuilds on a `warmerInterval` of 4
+minutes (less than `indexTTL`). In steady state the memoized index never
+expires, so handlers never block on `BuildIndex`. `POST /api/v1/refresh`
+(30-second global throttle) invalidates both the fetcher caches and the
+memoized index, then forces one synchronous rebuild — use it when a ZPA
+change needs immediate visibility.
 
 ## Storage
 
@@ -119,5 +132,6 @@ change.
 
 - SCIM group membership is not resolved. See
   [Roadmap](/reference/roadmap/).
-- Cache refresh is reactive (request-driven). No proactive warmup or
-  manual invalidation trigger. See [Roadmap](/reference/roadmap/).
+- Fetcher-level cache refresh is still reactive (per-resource TTL). The
+  index warmer absorbs most of the latency cost from handlers; see
+  [Roadmap](/reference/roadmap/) for proactive fetcher refresh.
