@@ -209,10 +209,53 @@
 }
 .land-nav-links {
   display: flex;
+  align-items: center;
   gap: 32px;
   list-style: none;
   margin: 0;
   padding: 0;
+}
+.land-nav .land-nav-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--land-border-hi);
+  background: rgba(22, 6, 6, 0.5);
+  color: var(--land-text);
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+.land-nav .land-nav-demo:hover {
+  border-color: var(--land-red-hi);
+  color: #fff;
+  background: rgba(123, 26, 18, 0.28);
+}
+
+/* === Live indicator dot === */
+.live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2ecc71;
+  box-shadow: 0 0 8px rgba(46, 204, 113, 0.8);
+  position: relative;
+  flex-shrink: 0;
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(46, 204, 113, 0.6);
+  animation: live-pulse 1.8s ease-out infinite;
+}
+@keyframes live-pulse {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-dot::after { animation: none; }
 }
 
 /* === Hero === */
