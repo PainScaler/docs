@@ -20,11 +20,12 @@ schema. Only the new shape is in use.
 
 ## Rule ordering
 
-`RuleOrder` is the field that drives evaluation order. Type: **string**.
-Parse with `strconv.Atoi`, sort ascending.
+`Priority` is the field that drives evaluation order. Type: **string**.
+Parse with `strconv.Atoi`, sort **descending** — highest priority evaluates
+first.
 
-`Priority` exists on the struct but is not consulted by the simulator
-because no observed evaluation context uses it.
+`RuleOrder` also exists on the struct and is the inverse (ascending). The
+simulator ignores it; downstream code reads `Priority` only.
 
 ## Disabled flag
 

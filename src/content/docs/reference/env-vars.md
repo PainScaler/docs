@@ -5,7 +5,9 @@ description: Backend environment variable reference.
 
 ## ZPA credentials
 
-Required. The backend exits at startup when any of these are missing.
+Required for live use. The backend exits at startup when any of these
+are missing, unless `PAINSCALER_DEMO_SEED` is set (see below), in which
+case no ZPA calls are made and the credentials are not consulted.
 
 | Var | Purpose |
 |-----|---------|
@@ -16,6 +18,12 @@ Required. The backend exits at startup when any of these are missing.
 | `ZPA_IDP`           | Default IdP ID for SCIM operand resolution. |
 
 `example.env` in the repo root contains the empty shape.
+
+## Demo mode
+
+| Var | Purpose |
+|-----|---------|
+| `PAINSCALER_DEMO_SEED` | Path to a JSON-encoded `fetcher.Snapshot`. When set, the backend pre-seeds every `Cache[T]` from disk at startup and skips all ZPA fetches. `GET /api/v1/about` reports `demo: true` so the frontend can surface a "demo deployment" banner. Use `go run ./cmd/seedgen -out snapshot.json` to produce a synthetic snapshot. See [Demo mode](/deployment/demo-mode/). |
 
 ## Identity / proxy trust
 

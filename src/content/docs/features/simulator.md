@@ -11,7 +11,8 @@ per-rule trace including every condition the FSM evaluated.
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `POST` | `/api/v1/simulation/run` | Run one evaluation. Persists when the verdict is not `INVALID_CONTEXT`. |
+| `POST` | `/api/v1/simulation/run`     | Run one evaluation. Persists when the verdict is not `INVALID_CONTEXT`. |
+| `POST` | `/api/v1/simulation/compare` | What-if: run the same context against both the real policy set and an overlay that splices in a synthetic rule. |
 
 The full simulation CRUD set is documented in the
 [HTTP API reference](/reference/api/).
@@ -54,8 +55,9 @@ The context is rejected when any of the following hold:
 
 ## Rule ordering at `sort_rules`
 
-Rules are sorted ascending by `RuleOrder` (parsed via `strconv.Atoi`).
-Rules with `Disabled = "1"` are dropped here.
+Rules are sorted descending by `Priority` (parsed via `strconv.Atoi`).
+Highest priority evaluates first. Rules with `Disabled = "1"` are dropped
+here.
 
 ## Request body — `SimContext`
 
@@ -87,7 +89,7 @@ type DecisionResult struct {
 
 `Trace` entries contain:
 
-- `RuleID`, `RuleName`, `RuleOrder`, `Action`
+- `RuleID`, `RuleName`, `Priority`, `Action`
 - `Matched` — whether this rule decided the case
 - `SkipReason` — populated when the rule was skipped
 - `Conditions[]` — per-condition results, each with operands, the operator
@@ -108,11 +110,11 @@ type DecisionResult struct {
 | Concern             | Behavior |
 |---------------------|----------|
 | Operand value       | `RHS` holds the value across every operand `ObjectType`. `Values []string` is unused. |
-| Rule order          | `RuleOrder` (string), parsed via `strconv.Atoi`. Sort ascending. `Priority` is not consulted. |
+| Rule order          | `Priority` (string), parsed via `strconv.Atoi`. Sort descending — highest priority evaluates first. `RuleOrder` is ignored. |
 | Disabled flag       | String encoding. `"0"` = enabled, `"1"` = disabled. |
 | Unknown `ObjectType`| Skipped with a `SkipReason` warning. No semantic guess. |
 | Empty conditions    | Match every user. ZPA exhibits this behavior. Surfaced as a warning. |
-| Tie-breaking        | First match wins after sorting by `RuleOrder`. No further tie-break. |
+| Tie-breaking        | First match wins after sorting by `Priority`. No further tie-break. |
 
 ## Persistence
 
@@ -121,6 +123,39 @@ to `simulation_runs` in SQLite. `created_by` is populated from the
 `Remote-User` header (empty when running natively without a proxy).
 
 CRUD endpoints: see [HTTP API reference](/reference/api/).
+
+## Compare (what-if)
+
+`POST /api/v1/simulation/compare` runs the same `SimContext` twice: once
+against the indexed policy set, once against an overlay that splices in a
+synthetic rule built from the request. Both verdicts come back in one
+response so the UI can diff them.
+
+```go
+type CompareRequest struct {
+    Context       simulator.SimContext
+    VirtualPolicy VirtualPolicyInput
+}
+
+type VirtualPolicyInput struct {
+    Name            string
+    Action          string   // ALLOW | DENY
+    Priority        string   // parsed via strconv.Atoi, same rules as real policies
+    ScimGroupIDs    []string
+    SegmentIDs      []string
+    SegmentGroupIDs []string
+}
+
+type CompareResult struct {
+    Baseline    *simulator.DecisionResult
+    WithVirtual *simulator.DecisionResult
+    VirtualRule *policysetcontrollerv2.PolicyRuleResource
+}
+```
+
+The overlay is a shallow-cloned index with the synthetic rule inserted
+at `Priority`. The real policy list is untouched. Compare runs are not
+persisted.
 
 ## Tests
 

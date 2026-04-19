@@ -3,9 +3,11 @@ title: HTTP API
 description: Backend route reference. Generated from Go handlers via apigen.
 ---
 
-The backend exposes 37 JSON endpoints under `/api/v1`. Routes are generated
-from Go handler annotations in `internal/server/handlers.go`. The canonical
-spec is `internal/server/openapi.gen.json`. The typed TypeScript client is
+The backend exposes 40 JSON endpoints under `/api/v1`, plus two unversioned
+probe endpoints (`/healthz`, `/readyz`) and one metrics endpoint
+(`/metrics`). Routes are generated from Go handler annotations in
+`internal/server/handlers.go`. The canonical spec is
+`internal/server/openapi.gen.json`. The typed TypeScript client is
 `frontend/src/shared/api/api.gen.ts`. Generated files are not hand-edited.
 
 ## Route registration
@@ -53,20 +55,60 @@ TypeScript client. The proxy sets them. Trust model: see
 
 | Method | Path | Returns |
 |--------|------|---------|
-| POST   | `/api/v1/simulation/run`   | Runs the FSM, persists when valid, returns `DecisionResult`. |
-| GET    | `/api/v1/simulation`       | `SimulationRun[]` paginated list. |
-| GET    | `/api/v1/simulation/{id}`  | One historical run. |
-| DELETE | `/api/v1/simulation/{id}`  | Removes one run. |
-| GET    | `/api/v1/simulation/count` | Total run count. |
+| POST   | `/api/v1/simulation/run`     | Runs the FSM, persists when valid, returns `DecisionResult`. |
+| POST   | `/api/v1/simulation/compare` | Baseline vs overlay run. Injects a virtual rule and returns both decisions plus the synthetic rule. |
+| GET    | `/api/v1/simulation`         | `SimulationRun[]` paginated list. |
+| GET    | `/api/v1/simulation/{id}`    | One historical run. |
+| DELETE | `/api/v1/simulation/{id}`    | Removes one run. |
+| GET    | `/api/v1/simulation/count`   | Total run count. |
+
+`/api/v1/simulation/compare` body:
+
+```go
+type CompareRequest struct {
+    Context       simulator.SimContext
+    VirtualPolicy VirtualPolicyInput
+}
+
+type VirtualPolicyInput struct {
+    Name            string
+    Action          string   // ALLOW | DENY
+    Priority        string   // parsed via strconv.Atoi, same rules as real policies
+    ScimGroupIDs    []string
+    SegmentIDs      []string
+    SegmentGroupIDs []string
+}
+
+type CompareResult struct {
+    Baseline    *simulator.DecisionResult
+    WithVirtual *simulator.DecisionResult
+    VirtualRule *policysetcontrollerv2.PolicyRuleResource
+}
+```
+
+The overlay clones the index and splices the virtual rule in; the real
+policy set is not touched. Compare runs are not persisted.
 
 ### Identity and meta
 
 | Method | Path | Returns |
 |--------|------|---------|
 | GET  | `/api/v1/me`        | `Identity` from `Remote-*` headers (post-strip). |
-| GET  | `/api/v1/about`     | Build version, commit, date. |
+| GET  | `/api/v1/about`     | `About{ Version, Commit, Date, Demo }`. `Demo` is true when the backend was started with `PAINSCALER_DEMO_SEED`. |
+| GET  | `/api/v1/libraries` | Go toolchain version + name/version of each direct backend dependency (`Libraries{ Go, Backend[] }`). |
 | POST | `/api/v1/telemetry` | Browser telemetry batch (page views + errors). |
 | GET  | `/metrics`          | Prometheus metrics (in-cluster only). |
+
+### Cache control
+
+| Method | Path | Returns |
+|--------|------|---------|
+| POST | `/api/v1/refresh` | Invalidate every fetcher cache, drop the built index, and force one synchronous rebuild. Returns the first fetch error if any. |
+
+`POST /api/v1/refresh` requires a non-empty `Remote-User` header
+(`ErrUnauthenticated` otherwise) and is globally throttled to at most one
+allowed invocation per 30 seconds (`ErrRateLimited`). Use this instead of
+waiting out the fetcher TTL when a ZPA change needs immediate visibility.
 
 ### Flow graph
 
@@ -108,6 +150,20 @@ custom tooling on top of the index.
 | GET | `/api/v1/zpa/certificates` |
 | GET | `/api/v1/zpa/client-types` |
 | GET | `/api/v1/zpa/platforms` |
+
+## Liveness and readiness probes
+
+Unversioned, unauthenticated, outside the `/api/v1` prefix. Wire these to
+Kubernetes probes, compose healthchecks, or an upstream load balancer.
+
+| Method | Path | Semantics |
+|--------|------|-----------|
+| GET | `/healthz` | Always 200 once the HTTP listener is up. Liveness signal only — does not check upstream health. |
+| GET | `/readyz`  | 200 when the index is built and (if a DB is configured) the connection is reachable; 503 with a JSON `{"error": ...}` body otherwise. |
+
+The backend also caps incoming request bodies at 1 MiB
+(`maxRequestBodyBytes`). Requests over the cap fail at the middleware
+layer before the handler runs.
 
 ## OpenAPI
 
